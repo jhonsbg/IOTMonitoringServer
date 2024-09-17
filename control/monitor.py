@@ -88,6 +88,7 @@ def setup_mqtt():
     try:
         print("Bandera de test")
         client = mqtt.Client(settings.MQTT_USER_PUB)
+        time.sleep(1)
         print("Bandera de test 2")
         client.on_connect = on_connect
         print("Bandera de test 3")
