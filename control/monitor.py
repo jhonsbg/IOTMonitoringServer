@@ -86,7 +86,7 @@ def analyze_data():
         critical_message = "ALERTA CRITICA: No activa"
 
     # Enviamos la alerta crítica a un tópico específico
-    critical_topic = '{}/{}/{}/critical_alert/in'.format(country, state, city)
+    critical_topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
     print(datetime.now(), "Sending critical alert to {}: {}".format(critical_topic, critical_message))
     client.publish(critical_topic, critical_message)
 
