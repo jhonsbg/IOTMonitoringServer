@@ -63,7 +63,9 @@ def on_connect(client, userdata, flags, rc):
     '''
     Función que se ejecuta cuando se conecta al bróker.
     '''
+    print("Bandera de test 5")
     print("Conectando al broker MQTT...", mqtt.connack_string(rc))
+    print("Bandera de test 6")
 
 
 def on_disconnect(client: mqtt.Client, userdata, rc):
@@ -86,8 +88,11 @@ def setup_mqtt():
     try:
         print("Bandera de test")
         client = mqtt.Client(settings.MQTT_USER_PUB)
+        print("Bandera de test 2")
         client.on_connect = on_connect
+        print("Bandera de test 3")
         client.on_disconnect = on_disconnect
+        print("Bandera de test 4")
 
         if settings.MQTT_USE_TLS:
             client.tls_set(ca_certs=settings.CA_CRT_PATH,
