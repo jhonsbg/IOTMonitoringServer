@@ -13,6 +13,7 @@ client = mqtt.Client(settings.MQTT_USER_PUB)
 
 def analyze_data():
     client.reconnect()
+
     # Consulta todos los datos de la última hora, los agrupa por estación y variable
     # Compara el promedio con los valores límite que están en la base de datos para esa variable.
     # Si el promedio se excede de los límites, se envia un mensaje de alerta.
@@ -34,6 +35,14 @@ def analyze_data():
                 'station__location__state__name',
                 'station__location__country__name')
     alerts = 0
+
+    # Variables para alerta crítica
+    critical_alert_active = False
+    temperature_value = None
+    humidity_value = None
+    temperature_limits = (None, None)
+    humidity_limits = (None, None)
+
     for item in aggregation:
         alert = False
 
@@ -56,6 +65,31 @@ def analyze_data():
             client.publish(topic, message)
             alerts += 1
 
+        # Almacenamos los valores de temperatura y humedad para la alerta crítica
+        if variable == "temperature":
+            temperature_value = item["check_value"]
+            temperature_limits = (min_value, max_value)
+        elif variable == "humidity":
+            humidity_value = item["check_value"]
+            humidity_limits = (min_value, max_value)
+
+    # Alerta crítica: Evaluamos si temperatura y humedad están fuera de rango
+    if temperature_value is not None and humidity_value is not None:
+        if (temperature_value > temperature_limits[1] or temperature_value < temperature_limits[0]) and \
+           (humidity_value > humidity_limits[1] or humidity_value < humidity_limits[0]):
+            critical_alert_active = True
+    
+    # Generamos el mensaje de la alerta crítica
+    if critical_alert_active:
+        critical_message = "ALERTA CRITICA: Activa"
+    else:
+        critical_message = "ALERTA CRITICA: No activa"
+
+    # Enviamos la alerta crítica a un tópico específico
+    critical_topic = '{}/{}/{}/critical_alert/in'.format(country, state, city)
+    print(datetime.now(), "Sending critical alert to {}: {}".format(critical_topic, critical_message))
+    client.publish(critical_topic, critical_message)
+
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
 
@@ -64,9 +98,7 @@ def on_connect(client, userdata, flags, rc):
     '''
     Función que se ejecuta cuando se conecta al bróker.
     '''
-    print("Bandera de test 5")
     print("Conectando al broker MQTT...", mqtt.connack_string(rc))
-    print("Bandera de test 6")
 
 
 def on_disconnect(client: mqtt.Client, userdata, rc):
@@ -87,14 +119,10 @@ def setup_mqtt():
     print("Iniciando cliente MQTT...", settings.MQTT_HOST, settings.MQTT_PORT)
     global client
     try:
-        print("Bandera de test")
         client = mqtt.Client(settings.MQTT_USER_PUB)
         time.sleep(10)
-        print("Bandera de test 2")
         client.on_connect = on_connect
-        print("Bandera de test 3")
         client.on_disconnect = on_disconnect
-        print("Bandera de test 4")
 
         if settings.MQTT_USE_TLS:
             client.tls_set(ca_certs=settings.CA_CRT_PATH,
