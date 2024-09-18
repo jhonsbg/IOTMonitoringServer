@@ -66,10 +66,10 @@ def analyze_data():
             alerts += 1
 
         # Almacenamos los valores de temperatura y humedad para la alerta crítica
-        if variable == "temperature":
+        if variable == "temperatura":
             temperature_value = item["check_value"]
             temperature_limits = (min_value, max_value)
-        elif variable == "humidity":
+        elif variable == "humedad":
             humidity_value = item["check_value"]
             humidity_limits = (min_value, max_value)
 
